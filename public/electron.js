@@ -4,6 +4,7 @@ const {
   dialog,
   getCurrentWindow,
   ipcMain,
+  Menu,
 } = require("electron");
 const { runServer } = require("./express/server.js");
 const QRCode = require("qrcode");
@@ -23,7 +24,9 @@ function createWindow() {
     },
   });
   win.setResizable(false);
-  win.removeMenu();
+
+  if (process.platform !== "darwin") win.removeMenu();
+  else setMenu();
 
   ipcMain.on("minimize", () => win.minimize());
   ipcMain.on("close", () => win.close());
@@ -61,15 +64,22 @@ function createWindow() {
   );
 }
 
+const setMenu = () => {
+  const template = [
+    {
+      label: "File",
+      submenu: [{ label: "Quit", click: app.exit, accelerator: "Command+q" }],
+    },
+  ];
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
+};
+
 app.on("ready", createWindow);
 
 // Quit when all windows are closed.
 app.on("window-all-closed", function () {
-  // On OS X it is common for applications and their menu bar
-  // to stay active until the user quits explicitly with Cmd + Q
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
+  app.quit();
 });
 
 app.on("activate", function () {
